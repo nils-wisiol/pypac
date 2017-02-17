@@ -67,3 +67,47 @@ class NoisyGaussianLtf(GaussianLtf):
 
     def val(self, x):
         return super(NoisyGaussianLtf, self).val(x) + numpy.random.normal(self.mu_noise, self.sigma_noise)
+
+
+class CombinedLtfs():
+    """
+    A number of LTFs combined with a Boolean function; the LTFs will be chosen by a Gaussian distribution
+    upon initialization. The input is the same to each LTF.
+    """
+
+    def __init__(self, n, k, mu=0, sigma=1):
+        assert k/2 == int(k/2)
+        self.k = int(k)
+        self.ltfs = []
+        for i in range(k):
+            self.ltfs += [GaussianLtf(n, mu, sigma)]
+
+    def combine(self, r):
+        pass
+
+    def eval(self, x):
+        return self.combine([ltf.eval(x) for ltf in self.ltfs])
+
+
+class IpMod2CombinedLtfs(CombinedLtfs):
+    """
+    A number of LTFs combined with a the inner product mod 2 function; the LTFs will be chosen by a Gaussian
+    distribution upon initialization. The input is the same to each LTF.
+    """
+
+    def combine(self, r):
+        k_half = int(self.k/2)
+        x = r[0:k_half]
+        y = r[k_half:self.k]
+
+        return numpy.prod([-1 if x[i] == -1 and y[i] == -1 else +1 for i in range(k_half)])
+
+
+class XorCombinedLtfs(CombinedLtfs):
+    """
+    A number of LTFs combined with a the parity function; the LTFs will be chosen by a Gaussian
+    distribution upon initialization. The input is the same to each LTF.
+    """
+
+    def combine(self, r):
+        return numpy.prod(r)
