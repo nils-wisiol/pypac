@@ -50,6 +50,16 @@ def random_inputs(n, num):
         yield random_input(n)
 
 
+def sample_inputs(n, num):
+    """
+    returns an iterator for either random samples of {-1,1}-vectors of length `n` if `num` < 2^n,
+    and an iterator for all {-1,1}-vectors of length `n` otherwise.
+    Note that we return only 2^n vectors even with `num` > 2^n.
+    In other words, the output of this function is deterministic if and only if num >= 2^n.
+    """
+    return random_inputs(n, num) if num < 2**n else all_inputs(n)
+
+
 def chi(s, x):
     """
     returns chi_s(x) = prod_(i \in s) x_i
