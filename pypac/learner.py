@@ -14,8 +14,12 @@ class LowDegreeAlgorithm:
     def __init__(self, instance, degree, epsilon, delta):
         self.instance = instance
         self.degree = degree
-        self.epsilon = epsilon
-        self.delta = delta
+        self.monomial_count = 0
+        for k in range(degree + 1):
+            self.monomial_count += tools.ncr(self.instance.n, k)
+        self.epsilon = math.sqrt(epsilon) / (2 * math.sqrt(self.monomial_count))
+        self.delta = delta / self.monomial_count
+        self.sample_size = int(math.ceil(12 * math.log(2.0 / self.delta) / (self.epsilon ** 2)))
         self.fourier_coefficients = []
         self.coefficient = namedtuple('coefficient', ['val', 's'])
 
@@ -32,10 +36,10 @@ class LowDegreeAlgorithm:
         Warning: exponential runtime in `self.instance.input_length`.
         """
         return self.coefficient(
-            val=numpy.mean(
-                [self.instance.eval(x) * tools.chi(s, x) for x in tools.all_inputs(self.instance.input_length)]
-            ),
-            s=s,
+                val=numpy.mean(
+                        [self.instance.eval(x) * tools.chi(s, x) for x in tools.all_inputs(self.instance.input_length)]
+                ),
+                s=s,
         )
 
     def approx_fourier_coefficient(self, s):
@@ -43,13 +47,11 @@ class LowDegreeAlgorithm:
         approximate the Fourier coefficient of `self.instance` on `s` by evaluating the function on a number of
         random inputs.
         """
-        # TODO check exact example set size, Prop 3.30
         return self.coefficient(
-            val=numpy.mean([self.instance.eval(x) * tools.chi(s, x) for x in tools.random_inputs(
-                self.instance.input_length,
-                math.ceil(numpy.log(1 / self.delta) / (self.epsilon ** 2))
-            )]),
-            s=s
+                val=tools.approx_fourier_coefficient(self.instance,
+                                                     s,
+                                                     self.sample_size),
+                s=s
         )
 
     def low_degree_chi(self, degree):
